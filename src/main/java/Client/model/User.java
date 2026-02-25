@@ -1,10 +1,10 @@
-package model;
+package Client.model;
 
 import java.util.Objects;
 
 /**
  * Класс пользователя с полями name, password, mail.
- * Класс является неизменяемым (immutable) для безопасности данных.
+ * Класс является неизменяемым для безопасности данных
  */
 public final class User {
 
@@ -15,7 +15,7 @@ public final class User {
     /**
      * Приватный конструктор — создание только через Builder
      */
-    private User(String name, String password, String mail) {
+    User(String name, String password, String mail) {
         this.name = name;
         this.password = password;
         this.mail = mail;
