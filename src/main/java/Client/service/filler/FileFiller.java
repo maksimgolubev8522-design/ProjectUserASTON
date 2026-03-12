@@ -6,6 +6,7 @@ import Client.service.validation.UserValidator;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 
 public class FileFiller implements Filler {
 
@@ -20,9 +21,10 @@ public class FileFiller implements Filler {
 
     @Override
     public List<User> fill(int count) {
-        System.out.println("❌ Для файлового заполнения используйте fillFromPath(String filePath)");
-        System.out.println("   Параметр count игнорируется - загружаются все пользователи из файла");
-        return new ArrayList<>();
+        System.out.print("Введите путь к файлу: ");
+        Scanner scanner = new Scanner(System.in);
+        String filePath = scanner.nextLine().trim();
+        return fillFromPath(filePath);
     }
 
     public List<User> fillFromPath(String filePath) {
@@ -87,7 +89,6 @@ public class FileFiller implements Filler {
 
         for (int i = 0; i < lines.size(); i++) {
             String line = lines.get(i).trim();
-
 
             if (line.isEmpty() || line.startsWith("#")) {
                 continue;
