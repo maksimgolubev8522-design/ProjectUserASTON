@@ -1,14 +1,10 @@
 package Client;
 
+import Client.collection.UserList;
 import Client.model.User;
 import Client.service.file.FileWriterService;
-import Client.service.filler.DataFiller;
-import Client.service.filler.FileFiller;
-import Client.service.filler.ManualFiller;
-import Client.service.filler.RandomFiller;
-import Client.strategy.BubbleSort;
-import Client.strategy.InsertionSort;
-import Client.strategy.SortStrategy;
+import Client.service.filler.*;
+import Client.strategy.*;
 
 import java.util.Comparator;
 import java.util.List;
@@ -17,134 +13,147 @@ import java.util.Scanner;
 public class Main {
 
     private static final Scanner scanner = new Scanner(System.in);
-
-    private static List<User> users;
+    private static UserList userList = new UserList();
+    private static SortStrategy currentStrategy = new InsertionSort();
 
     public static void main(String[] args) {
 
-        FileWriterService writerService = new FileWriterService();
-
         while (true) {
-
             printMenu();
 
             int choice = readInt();
+            scanner.nextLine();
 
             switch (choice) {
-
                 case 1 -> fillUsers(new ManualFiller());
-
                 case 2 -> fillUsers(new RandomFiller());
-
                 case 3 -> fillUsers(new FileFiller());
-
-                case 4 -> sortUsers();
-
-                case 5 -> saveUsers(writerService);
-
+                case 4 -> chooseSortStrategy();
+                case 5 -> sortUsers();
+                case 6 -> saveUsers();
                 case 0 -> {
                     System.out.println("Выход из программы...");
                     return;
                 }
-
                 default -> System.out.println("Неверный пункт меню.");
             }
         }
     }
 
     private static void printMenu() {
-
-        System.out.println("\n====== MENU ======");
+        System.out.println("\n====== МЕНЮ ======");
         System.out.println("1. Ввести пользователей вручную");
         System.out.println("2. Сгенерировать случайных пользователей");
         System.out.println("3. Загрузить пользователей из файла");
-        System.out.println("4. Отсортировать пользователей");
-        System.out.println("5. Сохранить в файл");
+        System.out.println("4. Выбрать стратегию сортировки");
+        System.out.println("5. Отсортировать пользователей");
+        System.out.println("6. Сохранить в файл");
         System.out.println("0. Выход");
         System.out.print("Выберите пункт: ");
     }
 
     private static int readInt() {
-
         while (!scanner.hasNextInt()) {
             System.out.println("Введите число.");
             scanner.next();
         }
-
         return scanner.nextInt();
     }
 
-    private static void fillUsers(DataFiller filler) {
+    private static void fillUsers(Filler filler) {
+        List<User> newUsers = filler.fill(0); // параметр не используется для FileFiller
 
-        System.out.print("Введите количество пользователей: ");
-
-        int size = readInt();
-        scanner.nextLine();
-
-        users = filler.fill(size);
-
-        System.out.println("Данные успешно заполнены.");
-        printUsers();
+        if (newUsers != null && !newUsers.isEmpty()) {
+            for (User user : newUsers) {
+                userList.addUser(user);
+            }
+            System.out.println("Данные успешно добавлены. Всего пользователей: " + userList.size());
+            printUsers();
+        } else {
+            System.out.println("Не удалось добавить пользователей.");
+        }
     }
 
-    private static void sortUsers() {
-
-        if (users == null || users.isEmpty()) {
-            System.out.println("Список пуст.");
-            return;
-        }
-
-        System.out.println("Выберите алгоритм сортировки:");
+    private static void chooseSortStrategy() {
+        System.out.println("\nВыберите алгоритм сортировки:");
         System.out.println("1. Bubble Sort");
         System.out.println("2. Insertion Sort");
+        System.out.println("3. Even-Odd Sort");
+        System.out.print("Ваш выбор: ");
 
-        int sortChoice = readInt();
+        int choice = readInt();
+        scanner.nextLine();
 
-        SortStrategy strategy;
-
-        switch (sortChoice) {
-            case 1 -> strategy = new BubbleSort();
-            case 2 -> strategy = new InsertionSort();
+        switch (choice) {
+            case 1 -> currentStrategy = new BubbleSort();
+            case 2 -> currentStrategy = new InsertionSort();
+            case 3 -> currentStrategy = new EvenOddSort();
             default -> {
-                System.out.println("Неверный выбор.");
+                System.out.println("Неверный выбор. Оставлена текущая стратегия.");
                 return;
             }
         }
+        System.out.println("Выбрана стратегия: " + currentStrategy.getClass().getSimpleName());
+    }
 
-        Comparator<User> comparator =
-                Comparator.comparing(User::getName)
-                        .thenComparing(User::getPassword)
-                        .thenComparing(User::getMail);
+    private static void sortUsers() {
+        if (userList.isEmpty()) {
+            System.out.println("Список пользователей пуст.");
+            return;
+        }
 
-        users = strategy.sort(users, comparator);
+        Comparator<User> comparator = Comparator
+                .comparing(User::getName)
+                .thenComparing(User::getPassword)
+                .thenComparing(User::getMail);
 
-        System.out.println("Сортировка выполнена.");
+        userList.sort(currentStrategy, comparator);
+        System.out.println("Сортировка выполнена. Стратегия: " + currentStrategy.getClass().getSimpleName());
         printUsers();
     }
 
-    private static void saveUsers(FileWriterService writerService) {
-
-        if (users == null || users.isEmpty()) {
+    private static void saveUsers() {
+        if (userList.isEmpty()) {
             System.out.println("Нет данных для сохранения.");
             return;
         }
 
-        writerService.writeUsers(users);
+        System.out.print("Введите путь для сохранения файла: ");
+        String filePath = scanner.nextLine().trim();
 
-        System.out.println("Данные сохранены в файл.");
+        FileWriterService writerService = new FileWriterService();
+
+        System.out.println("Выберите режим записи:");
+        System.out.println("1. Переписать файл");
+        System.out.println("2. Дописать в конец");
+        System.out.print("Ваш выбор: ");
+
+        try {
+            int mode = Integer.parseInt(scanner.nextLine());
+
+            if (mode == 1) {
+                writerService.writeToFile(userList.getUsers(), filePath);
+                System.out.println("Данные сохранены в файл: " + filePath);
+            } else if (mode == 2) {
+                writerService.appendToFile(userList.getUsers(), filePath);
+                System.out.println("Данные добавлены в файл: " + filePath);
+            } else {
+                System.out.println("Неверный выбор.");
+            }
+        } catch (Exception e) {
+            System.out.println("Ошибка при сохранении: " + e.getMessage());
+        }
     }
 
     private static void printUsers() {
-
-        if (users == null || users.isEmpty()) {
-            System.out.println("Список пуст.");
+        if (userList.isEmpty()) {
+            System.out.println("Список пользователей пуст.");
             return;
         }
 
-        System.out.println("\n--- USERS ---");
-
-        for (User user : users) {
-            System.out.println(user);
+        System.out.println("\n--- ПОЛЬЗОВАТЕЛИ (" + userList.size() + ") ---");
+        for (int i = 0; i < userList.size(); i++) {
+            System.out.println((i + 1) + ". " + userList.getUser(i));
         }
     }
 }
