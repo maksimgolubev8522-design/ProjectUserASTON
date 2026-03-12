@@ -1,14 +1,16 @@
 package Client.service.filler;
 
 import Client.model.User;
+import Client.service.validation.UserValidator;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class RandomFiller {
+public class RandomFiller implements Filler {
 
     private final Random random;
-
+    private int totalAttempts = 0;
+    private int validationFailures = 0;
 
     private static final String[] NAMES = {
             "Алексей", "Дмитрий", "Михаил", "Андрей", "Сергей", "Павел", "Николай",
@@ -25,56 +27,77 @@ public class RandomFiller {
         this.random = new Random();
     }
 
+    @Override
     public List<User> fill(int count) {
         if (count <= 0) {
-            System.out.println("Количество пользователей должно быть положительным");
+            System.out.println("❌ Количество пользователей должно быть положительным");
             return new ArrayList<>();
         }
 
+        resetStatistics();
         List<User> users = new ArrayList<>();
-        System.out.println("\n=== Генерация случайных пользователей ===");
+        System.out.println("\n" + getDescription());
         System.out.println("Генерируется: " + count + " пользователей");
 
-        int attempts = 0;
-        int maxAttempts = count * 10;
+        while (users.size() < count && totalAttempts < count * 20) {
+            totalAttempts++;
 
-        while (users.size() < count && attempts < maxAttempts) {
-            try {
-                User user = generateRandomUser();
-                users.add(user);
-                System.out.print(".");
-            } catch (IllegalArgumentException e) {
-                attempts++;
+            String name = generateRandomName();
+            String password = generateRandomPassword();
+            String mail = generateRandomMail(name);
+
+            if (UserValidator.isValidUser(name, password, mail)) {
+                try {
+                    User user = User.builder()
+                            .name(name)
+                            .password(password)
+                            .mail(mail)
+                            .build();
+
+                    users.add(user);
+                    System.out.print(".");
+
+                } catch (IllegalArgumentException e) {
+                    validationFailures++;
+                    System.out.print("!");
+                }
+            } else {
+                validationFailures++;
+                System.out.print("?");
             }
         }
 
-        System.out.println("\n✓ Сгенерировано пользователей: " + users.size());
+        printStatistics();
         return users;
     }
 
-    private User generateRandomUser() {
-        String name = generateRandomName();
-        String password = generateRandomPassword();
-        String mail = generateRandomMail(name);
-
-        return User.builder()
-                .name(name)
-                .password(password)
-                .mail(mail)
-                .build();
+    @Override
+    public String getDescription() {
+        return "=== Генерация случайных пользователей ===";
     }
 
+    private void resetStatistics() {
+        totalAttempts = 0;
+        validationFailures = 0;
+    }
+
+    private void printStatistics() {
+        System.out.println("\n\n📊 Статистика генерации:");
+        System.out.println("  - Всего попыток: " + totalAttempts);
+        System.out.println("  - Провалов валидации: " + validationFailures);
+        System.out.println("  - Процент успеха: " +
+                String.format("%.1f%%", (totalAttempts - validationFailures) * 100.0 / totalAttempts));
+        System.out.println("✓ Сгенерировано пользователей: " + (totalAttempts - validationFailures));
+    }
 
     private String generateRandomName() {
         return NAMES[random.nextInt(NAMES.length)];
     }
 
-
     private String generateRandomPassword() {
-        int length = random.nextInt(15) + 6; // от 6 до 20 символов
-        StringBuilder password = new StringBuilder();
-
+        int length = random.nextInt(15) + 6;
         String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        StringBuilder password = new StringBuilder();
 
         for (int i = 0; i < length; i++) {
             password.append(chars.charAt(random.nextInt(chars.length())));
@@ -84,7 +107,6 @@ public class RandomFiller {
     }
 
     private String generateRandomMail(String name) {
-
         String latinName = transliterate(name.toLowerCase());
 
         if (random.nextBoolean()) {
@@ -92,7 +114,6 @@ public class RandomFiller {
         }
 
         String domain = DOMAINS[random.nextInt(DOMAINS.length)];
-
         return latinName + "@" + domain;
     }
 
@@ -104,7 +125,7 @@ public class RandomFiller {
                 "k", "l", "m", "n", "o", "p", "r", "s", "t", "u", "f",
                 "kh", "ts", "ch", "sh", "sch", "", "y", "", "e", "yu", "ya"};
 
-        String result = text.toLowerCase();
+        String result = text;
         for (int i = 0; i < cyrillic.length; i++) {
             result = result.replace(cyrillic[i], latin[i]);
         }

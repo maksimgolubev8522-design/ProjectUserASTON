@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
-public class ManualFiller {
+public class ManualFiller implements Filler {
 
     private final Scanner scanner;
 
@@ -13,6 +13,7 @@ public class ManualFiller {
         this.scanner = new Scanner(System.in);
     }
 
+    @Override
     public List<User> fill(int count) {
         if (count <= 0) {
             System.out.println("Количество пользователей должно быть положительным");
@@ -20,7 +21,7 @@ public class ManualFiller {
         }
 
         List<User> users = new ArrayList<>();
-        System.out.println("\n=== Ручной ввод пользователей ===");
+        System.out.println("\n" + getDescription());
         System.out.println("Всего нужно ввести: " + count + " пользователей");
         System.out.println("Правила валидации:");
         System.out.println("  - Имя: от 2 до 50 символов, не пустое");
@@ -59,5 +60,10 @@ public class ManualFiller {
 
         System.out.println("\n✓ Ручной ввод завершен. Добавлено пользователей: " + users.size());
         return users;
+    }
+
+    @Override
+    public String getDescription() {
+        return "=== Ручной ввод пользователей ===";
     }
 }
