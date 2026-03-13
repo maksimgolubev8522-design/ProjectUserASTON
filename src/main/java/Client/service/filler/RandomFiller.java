@@ -5,6 +5,7 @@ import Client.service.validation.UserValidator;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.Scanner;
 
 public class RandomFiller implements Filler {
 
@@ -28,14 +29,25 @@ public class RandomFiller implements Filler {
     @Override
     public List<User> fill(int count) {
         if (count <= 0) {
-            System.out.println("Количество должно быть положительным");
+            Scanner scanner = new Scanner(System.in);
+            System.out.print("Введите количество пользователей для генерации: ");
+            try {
+                count = Integer.parseInt(scanner.nextLine());
+            } catch (NumberFormatException e) {
+                System.out.println(" Введите корректное число");
+                return new ArrayList<>();
+            }
+        }
+
+        if (count <= 0) {
+            System.out.println(" Количество должно быть положительным");
             return new ArrayList<>();
         }
 
         resetStats();
         List<User> users = new ArrayList<>();
         System.out.println("\n" + getDescription());
-        System.out.print("Генерация: ");
+        System.out.print("Генерация " + count + " пользователей: ");
 
         while (users.size() < count && attempts < count * 10) {
             attempts++;
@@ -53,13 +65,15 @@ public class RandomFiller implements Filler {
                             .build();
                     users.add(user);
                     generatedCount++;
-                    if (generatedCount % 10 == 0) System.out.print(".");
+                    if (generatedCount % 10 == 0 || generatedCount == count) {
+                        System.out.print(".");
+                    }
                 } catch (IllegalArgumentException e) {
-                    // игнорируем
                 }
             }
         }
 
+        System.out.println();
         printStats();
         return users;
     }
@@ -75,8 +89,10 @@ public class RandomFiller implements Filler {
     }
 
     private void printStats() {
-        System.out.println("\nСгенерировано: " + generatedCount +
-                " (попыток: " + attempts + ")");
+        System.out.println(" Сгенерировано: " + generatedCount + " из " + attempts + " попыток");
+        if (generatedCount < attempts) {
+            System.out.println("   (пропущено невалидных: " + (attempts - generatedCount) + ")");
+        }
     }
 
     private String generateRandomName() {
@@ -84,7 +100,7 @@ public class RandomFiller implements Filler {
     }
 
     private String generateRandomPassword() {
-        int length = random.nextInt(10) + 6; // 6-15 символов
+        int length = random.nextInt(10) + 6;
         String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
         StringBuilder password = new StringBuilder();
         for (int i = 0; i < length; i++) {
