@@ -2,26 +2,18 @@ package Client.model;
 
 import java.util.Objects;
 
-/**
- * Класс пользователя с полями name, password, mail.
- * Класс является неизменяемым для безопасности данных
- */
 public final class User {
 
     private final String name;
     private final String password;
     private final String mail;
 
-    /**
-     * Приватный конструктор — создание только через Builder
-     */
     User(String name, String password, String mail) {
         this.name = name;
         this.password = password;
         this.mail = mail;
     }
 
-    // Геттеры
     public String getName() {
         return name;
     }
@@ -58,9 +50,6 @@ public final class User {
                 '}';
     }
 
-    /**
-     * Статический метод для создания Builder
-     */
     public static UserBuilder builder() {
         return new UserBuilder();
     }

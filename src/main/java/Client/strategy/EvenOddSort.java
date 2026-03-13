@@ -2,6 +2,7 @@ package Client.strategy;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.ToIntFunction;
 
 public class EvenOddSort extends SortStrategy {
     @Override
@@ -15,7 +16,6 @@ public class EvenOddSort extends SortStrategy {
         while (!sorted) {
             sorted = true;
 
-            // Сортировка чётных индексов
             for (int i = 0; i <= n - 2; i += 2) {
                 if (comparator.compare(list.get(i), list.get(i + 1)) > 0) {
                     java.util.Collections.swap(list, i, i + 1);
@@ -23,7 +23,6 @@ public class EvenOddSort extends SortStrategy {
                 }
             }
 
-            // Сортировка нечётных индексов
             for (int i = 1; i <= n - 2; i += 2) {
                 if (comparator.compare(list.get(i), list.get(i + 1)) > 0) {
                     java.util.Collections.swap(list, i, i + 1);
@@ -33,5 +32,10 @@ public class EvenOddSort extends SortStrategy {
         }
 
         return list;
+    }
+
+    public <T> List<T> sortWithEvenOdd(List<T> items, Comparator<T> comparator,
+                                       ToIntFunction<T> numericFieldExtractor) {
+        return sortWithEvenOddCondition(items, comparator, numericFieldExtractor);
     }
 }

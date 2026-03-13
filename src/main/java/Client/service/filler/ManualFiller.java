@@ -16,7 +16,17 @@ public class ManualFiller implements Filler {
     @Override
     public List<User> fill(int count) {
         if (count <= 0) {
-            System.out.println("Количество пользователей должно быть положительным");
+            System.out.print("Введите количество пользователей для ввода: ");
+            try {
+                count = Integer.parseInt(scanner.nextLine());
+            } catch (NumberFormatException e) {
+                System.out.println(" Введите корректное число");
+                return new ArrayList<>();
+            }
+        }
+
+        if (count <= 0) {
+            System.out.println(" Количество пользователей должно быть положительным");
             return new ArrayList<>();
         }
 

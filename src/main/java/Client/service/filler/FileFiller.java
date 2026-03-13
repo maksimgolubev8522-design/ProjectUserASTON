@@ -45,7 +45,8 @@ public class FileFiller implements Filler {
         }
 
         try {
-            List<User> users = readAndValidateUsers(filePath);
+            // Используем Stream API для чтения и обработки
+            List<User> users = readAndValidateUsersWithStream(filePath);
 
             if (users.isEmpty()) {
                 System.out.println("❌ Не удалось загрузить пользователей из файла.");
@@ -61,9 +62,49 @@ public class FileFiller implements Filler {
         }
     }
 
+    // Новая версия с использованием Stream API
+    private List<User> readAndValidateUsersWithStream(String filePath) throws IOException {
+        List<String> lines = java.nio.file.Files.readAllLines(java.nio.file.Paths.get(filePath));
+        totalLines = lines.size();
+
+        System.out.println("Всего строк в файле: " + totalLines);
+
+        List<User> users = lines.stream()
+                .skip(0) // можно пропустить заголовки если нужно
+                .map(String::trim)
+                .filter(line -> !line.isEmpty() && !line.startsWith("#"))
+                .map(this::parseLineToUser)
+                .filter(user -> user != null)
+                .toList();
+
+        validLines = users.size();
+        return users;
+    }
+
+    private User parseLineToUser(String line) {
+        String[] parts = line.split(";");
+        if (parts.length != 3) return null;
+
+        String name = parts[0].trim();
+        String password = parts[1].trim();
+        String mail = parts[2].trim();
+
+        if (!UserValidator.isValidUser(name, password, mail)) return null;
+
+        try {
+            return User.builder()
+                    .name(name)
+                    .password(password)
+                    .mail(mail)
+                    .build();
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
     @Override
     public String getDescription() {
-        return "=== Заполнение из файла ===";
+        return "=== Заполнение из файла (Stream API) ===";
     }
 
     private boolean checkFileAvailability(String filePath) {
@@ -80,70 +121,8 @@ public class FileFiller implements Filler {
         return true;
     }
 
-    private List<User> readAndValidateUsers(String filePath) throws IOException {
-        List<User> users = new ArrayList<>();
-        List<String> lines = java.nio.file.Files.readAllLines(java.nio.file.Paths.get(filePath));
-
-        totalLines = lines.size();
-        System.out.println("Всего строк в файле: " + totalLines);
-
-        for (int i = 0; i < lines.size(); i++) {
-            String line = lines.get(i).trim();
-
-            if (line.isEmpty() || line.startsWith("#")) {
-                continue;
-            }
-
-            User user = parseAndValidateLine(line, i + 1);
-            if (user != null) {
-                users.add(user);
-                validLines++;
-            }
-        }
-
-        return users;
-    }
-
-    private User parseAndValidateLine(String line, int lineNumber) {
-        String[] parts = line.split(";");
-
-        if (parts.length != 3) {
-            System.out.println("⚠️ Строка " + lineNumber + ": неверный формат. Ожидается: name;password;mail");
-            return null;
-        }
-
-        String name = parts[0].trim();
-        String password = parts[1].trim();
-        String mail = parts[2].trim();
-
-        if (!UserValidator.isValidUser(name, password, mail)) {
-            System.out.println("⚠️ Строка " + lineNumber + ": невалидные данные:");
-            if (!UserValidator.isValidName(name)) {
-                System.out.println("   - " + UserValidator.getNameErrorMessage(name));
-            }
-            if (!UserValidator.isValidPassword(password)) {
-                System.out.println("   - " + UserValidator.getPasswordErrorMessage(password));
-            }
-            if (!UserValidator.isValidMail(mail)) {
-                System.out.println("   - " + UserValidator.getMailErrorMessage(mail));
-            }
-            return null;
-        }
-
-        try {
-            return User.builder()
-                    .name(name)
-                    .password(password)
-                    .mail(mail)
-                    .build();
-        } catch (IllegalArgumentException e) {
-            System.out.println("⚠️ Строка " + lineNumber + ": ошибка создания - " + e.getMessage());
-            return null;
-        }
-    }
-
     private void printStatistics() {
-        System.out.println("\n📊 Статистика загрузки:");
+        System.out.println("\n📊 Статистика загрузки (Stream API):");
         System.out.println("  - Всего обработано строк: " + totalLines);
         System.out.println("  - Валидных пользователей: " + validLines);
         System.out.println("  - Процент валидных: " +

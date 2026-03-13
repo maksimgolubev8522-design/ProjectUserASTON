@@ -8,19 +8,8 @@ import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Сервис для чтения пользователей из файла
- * Формат файла: каждая строка содержит name;password;mail
- */
 public class FileReaderService {
 
-    /**
-     * Читает пользователей из файла
-     *
-     * @param filePath путь к файлу
-     * @return список валидных пользователей
-     * @throws IOException если ошибка чтения файла
-     */
     public List<User> readFromFile(String filePath) throws IOException {
         List<User> users = new ArrayList<>();
         List<String> lines = Files.readAllLines(Paths.get(filePath));
@@ -34,12 +23,10 @@ public class FileReaderService {
         for (int i = 0; i < lines.size(); i++) {
             String line = lines.get(i).trim();
 
-            // Пропускаем пустые строки и комментарии
             if (line.isEmpty() || line.startsWith("#")) {
                 continue;
             }
 
-            // Разбиваем строку на части
             String[] parts = line.split(";");
 
             if (parts.length != 3) {
@@ -52,7 +39,6 @@ public class FileReaderService {
             String password = parts[1].trim();
             String mail = parts[2].trim();
 
-            // Проверяем валидность через UserValidator
             if (!UserValidator.isValidUser(name, password, mail)) {
                 System.err.println("Строка " + (i + 1) + ": невалидные данные:");
                 if (!UserValidator.isValidName(name)) {
@@ -68,7 +54,6 @@ public class FileReaderService {
                 continue;
             }
 
-            // Создаем пользователя через builder() метод класса User
             try {
                 User user = User.builder()
                         .name(name)
@@ -90,32 +75,14 @@ public class FileReaderService {
         return users;
     }
 
-    /**
-     * Проверяет существует ли файл
-     *
-     * @param filePath путь к файлу
-     * @return true если файл существует
-     */
     public boolean fileExists(String filePath) {
         return Files.exists(Paths.get(filePath));
     }
 
-    /**
-     * Получает абсолютный путь к файлу
-     *
-     * @param filePath путь к файлу
-     * @return абсолютный путь
-     */
     public String getAbsolutePath(String filePath) {
         return Paths.get(filePath).toAbsolutePath().toString();
     }
 
-    /**
-     * Проверяет доступен ли файл для чтения
-     *
-     * @param filePath путь к файлу
-     * @return true если файл доступен для чтения
-     */
     public boolean isReadable(String filePath) {
         Path path = Paths.get(filePath);
         return Files.exists(path) && Files.isReadable(path);
